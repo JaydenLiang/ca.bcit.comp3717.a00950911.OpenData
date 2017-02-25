@@ -1,93 +1,64 @@
 package ca.bcit.comp3717.a00950911.opendata;
 
-import android.database.sqlite.SQLiteDatabase;
+import android.app.ListActivity;
+import android.app.LoaderManager.LoaderCallbacks;
+import android.content.CursorLoader;
+import android.content.Intent;
+import android.content.Loader;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
+import android.widget.AdapterView;
+import android.widget.SimpleCursorAdapter;
 
-import com.codekrypt.greendao.db.DaoMaster;
-import com.codekrypt.greendao.db.DaoSession;
-import com.codekrypt.greendao.db.LOG;
-import com.codekrypt.greendao.db.LOGDao;
+import ca.bcit.comp3717.a00950911.opendata.DBUtils.DBHelper;
+import ca.bcit.comp3717.a00950911.opendata.DBUtils.OpenDataContentProvider;
 
-import java.util.List;
-
-public class MainActivity extends AppCompatActivity {
-
-    //Dao --> Data Access Object
-    private LOGDao log_dao; // Sql access object
-    private LOG temp_log_object; // Used for creating a LOG Object
-
-    String log_text="";  //Entered text data is save in this variable
-
-    private  final String DB_NAME ="logs-db" ;  //Name of Db file in the Device
-
+public class MainActivity extends ListActivity implements AdapterView.OnItemClickListener, LoaderCallbacks {
+    SimpleCursorAdapter simpleCursorAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        //Initialise DAO
-        log_dao=setupDb();
-
-        //Setting up form elements
-        Button textSave= (Button) findViewById(R.id.textSave);
-        Button textTop= (Button) findViewById(R.id.textTop);
-        final TextView textData=(TextView) findViewById(R.id.textData);
-
-        assert textSave != null;
-        textSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                log_text=textData.getText().toString();
-                temp_log_object=new LOG(null,log_text);// Class Object, Id is auto increment
-
-                SaveToSQL(temp_log_object);
-            }
-        });
-
-        assert textTop != null;
-        textTop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                textData.setText( getFromSQL() );
-            }
-        });
+        //update category list view
+        simpleCursorAdapter = new SimpleCursorAdapter(this,
+                R.layout.layout_category_list, null, new String[]{
+                DBHelper.getCategoryNameColumnName()
+        }, new int[]{
+                R.id.textView_layout_cat_list_name
+        }, 0);
+        setListAdapter(simpleCursorAdapter);
+        getListView().setOnItemClickListener(this);
+        getLoaderManager().initLoader(AppConstants.LOADER_CATEGORY_LIST_VIEW_LOADER_ID, null, this);
     }
 
-    //---------------------------------SQL QUERY Functions-----------------------------------------//
-    public String getFromSQL(){
-        List<LOG> log_list = log_dao.queryBuilder().orderDesc(LOGDao.Properties.Id).build().list();
-        //Get the list of all LOGS in Database in descending order
 
-        if(log_list.size()>0) {  //if list is not null
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Long categoryId = DBHelper.getInstance(getApplicationContext())
+                .getCategoryIdAtCursor((Cursor) simpleCursorAdapter.getItem(position), position);
+        Intent intent = new Intent(getApplicationContext(), DatasetListViewActivity.class);
+        intent.putExtra(DBHelper.getTagCategoryId(), categoryId);
+        startActivity(intent);
+    }
 
-            return log_list.get(0).getText();
-            //get(0)--> 1st object
-            // getText() is the function in LOG class
+    @Override
+    public Loader onCreateLoader(int id, Bundle args) {
+        if (id != AppConstants.LOADER_CATEGORY_LIST_VIEW_LOADER_ID) {
+            return null;
         }
-        return "";
+        return new CursorLoader(MainActivity.this,
+                OpenDataContentProvider.getCategoryQueryURI(),
+                new String[]{DBHelper.getCategoryNameColumnName()}, null, null,
+                null);
     }
 
-    public void SaveToSQL(LOG log_object) {
-        log_dao.insert(log_object);
+    @Override
+    public void onLoadFinished(Loader loader, Object data) {
+        simpleCursorAdapter.swapCursor((Cursor) data);
     }
-    //----------------------------***END SQL QUERY***---------------------------------------------//
 
-
-    //-------------------------------DB Setup Functions---------------------------------------------//
-
-    //Return the Configured LogDao Object
-    public LOGDao setupDb(){
-        DaoMaster.DevOpenHelper masterHelper = new DaoMaster.DevOpenHelper(this, DB_NAME, null); //create database db file if not exist
-        SQLiteDatabase db = masterHelper.getWritableDatabase();  //get the created database db file
-        DaoMaster master = new DaoMaster(db);//create masterDao
-        DaoSession masterSession=master.newSession(); //Creates Session session
-        return masterSession.getLOGDao();
+    @Override
+    public void onLoaderReset(Loader loader) {
+        simpleCursorAdapter.swapCursor(null);
     }
-    //-------------------------***END DB setup Functions***---------------------------------------//
-
 }
