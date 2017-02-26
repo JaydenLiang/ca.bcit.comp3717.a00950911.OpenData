@@ -29,10 +29,19 @@ public class OpenDataContentProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, CONTENT_TYPE + "/dataset/item/#", TYPE_DATASET_ITEM);
     }
 
+    /**
+     * get URI for a query for category
+     *
+     * @return
+     */
     public static Uri getCategoryQueryURI() {
         return Uri.withAppendedPath(CONTENT_URI, "category");
     }
 
+    /**
+     * get URI for a query for a dataset by given dataset id
+     * @return
+     */
     public static Uri getCategorySetQueryURI(Long datasetId) {
         return Uri.withAppendedPath(CONTENT_URI, "category/set/" + datasetId.toString());
     }

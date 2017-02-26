@@ -15,6 +15,7 @@ import ca.bcit.comp3717.a00950911.opendata.R;
 import ca.bcit.comp3717.a00950911.opendata.dao.Dataset;
 
 /**
+ * A list adapter that accepts a List<Dataset>
  * Created by jaydenliang on 2017-02-16.
  */
 
