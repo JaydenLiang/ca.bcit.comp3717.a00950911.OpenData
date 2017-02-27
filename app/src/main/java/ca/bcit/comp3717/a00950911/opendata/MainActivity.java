@@ -31,6 +31,11 @@ public class MainActivity extends ListActivity implements AdapterView.OnItemClic
         getLoaderManager().initLoader(AppConstants.LOADER_CATEGORY_LIST_VIEW_LOADER_ID, null, this);
     }
 
+    @Override
+    protected void onDestroy() {
+        DBHelper.getInstance(getApplicationContext()).closeDatabase();
+        super.onDestroy();
+    }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

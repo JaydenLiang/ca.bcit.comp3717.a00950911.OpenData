@@ -100,7 +100,10 @@ public class DBHelper {
     }
 
     public void closeDatabase() {
-
+        if (db != null) {
+            db.close();
+            db = null;
+        }
     }
 
     /**
