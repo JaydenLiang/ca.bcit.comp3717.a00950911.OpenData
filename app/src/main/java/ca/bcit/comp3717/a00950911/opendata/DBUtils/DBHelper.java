@@ -22,7 +22,6 @@ import ca.bcit.comp3717.a00950911.opendata.dao.DatasetDao;
 
 public class DBHelper {
     public static final int NOT_FOUND = -1;
-    private static final int DATABASE_VERSION = 1;
     private static DBHelper instance;
     private DevOpenHelper devOpenHelper;
     private SQLiteDatabase db;
@@ -81,17 +80,9 @@ public class DBHelper {
         return DatasetDao.Properties.Set_name.columnName;
     }
 
-    synchronized public DBHelper openWritableDatabase() {
-        if (db == null || db.isReadOnly()) {
-            db = devOpenHelper.getWritableDatabase();
-            daoMaster = new DaoMaster(db);
-            daoSession = daoMaster.newSession();
-        }
-        return this;
-    }
-
-    synchronized public DBHelper openReadableDatabase() {
-        if (db == null || !db.isReadOnly()) {
+    public DBHelper openReadableDatabase() {
+        if (db == null) {
+            //greenDao already synchronizes the db instantiation
             db = devOpenHelper.getReadableDatabase();
             daoMaster = new DaoMaster(db);
             daoSession = daoMaster.newSession();
@@ -107,14 +98,13 @@ public class DBHelper {
     }
 
     /**
-     * reset the database
+     * no need to make this method public for this app because we only internally open a writable db for importing data.
+     * @return
      */
-    synchronized public void resetDatabase() {
-        if (daoSession != null && daoMaster != null) {
-            DaoMaster.dropAllTables(daoSession.getDatabase(), true);
-            DaoMaster.createAllTables(daoSession.getDatabase(), true);
-            importFromResource();
-        }
+    private DaoSession openWritableDatabase() {
+        SQLiteDatabase db = devOpenHelper.getWritableDatabase();
+        daoMaster = new DaoMaster(db);
+        return daoMaster.newSession();
     }
 
     /**
@@ -122,7 +112,7 @@ public class DBHelper {
      * @return
      */
     private DBHelper importFromResource() {
-        openWritableDatabase();
+        DaoSession daoSession = openWritableDatabase();
         String[] cat;
         Long catId;
         Category category;

@@ -34,6 +34,8 @@ public class DaoMaster extends AbstractDaoMaster {
      * Creates underlying database table using DAOs.
      */
     public static void createAllTables(Database db, boolean ifNotExists) {
+        Log.i("greenDAO", "Create all tables");
+
         CategoryDao.createTable(db, ifNotExists);
         DatasetDao.createTable(db, ifNotExists);
     }
@@ -98,6 +100,7 @@ public class DaoMaster extends AbstractDaoMaster {
         @Override
         public void onUpgrade(Database db, int oldVersion, int newVersion) {
             Log.i("greenDAO", "Upgrading schema from version " + oldVersion + " to " + newVersion + " by dropping all tables");
+
             dropAllTables(db, true);
             onCreate(db);
         }
